@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hotel Booking System</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #chat { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll; }
+        #map { height: 400px; }
+    </style>
+</head>
+<body>
+    <h1>Hotel Booking System</h1>
+    <div>
+        <h2>Search Hotels</h2>
+        <form id="searchForm">
+            <input type="text" id="destination" placeholder="Destination" required>
+            <input type="date" id="checkIn" required>
+            <input type="date" id="checkOut" required>
+            <input type="number" id="guests" placeholder="Guests" required>
+            <button type="submit">Search</button>
+        </form>
+        <div id="results"></div>
+        <div id="map"></div>
+    </div>
+    <div>
+        <h2>AI Chat</h2>
+        <div id="chat"></div>
+        <input type="text" id="chatInput" placeholder="Type your request...">
+        <button onclick="sendChat()">Send</button>
+    </div>
+    <script>
+        async function searchHotels() {
+            const destination = document.getElementById('destination').value;
+            const checkIn = document.getElementById('checkIn').value;
+            const checkOut = document.getElementById('checkOut').value;
+            const guests = document.getElementById('guests').value;
+            const response = await fetch(`http://localhost:8000/api/v1/hotels/search?destination=${destination}&check_in=${checkIn}&check_out=${checkOut}&guests=${guests}`);
+            const data = await response.json();
+            document.getElementById('results').innerHTML = data.results.map(h =>
+                `<p>${h.hotel_name} - ${h.room_type} - $${h.price}/night <button onclick="book('${h.hotel_id}', '${h.room_id}', '${checkIn}', '${checkOut}', ${guests}, ${h.price})">Book</button></p>`
+            ).join('');
+            // Mock map display (replace with Google Maps/OpenStreetMap)
+            document.getElementById('map').innerHTML = 'Map placeholder';
+        }
+
+        async function book(hotelId, roomId, checkIn, checkOut, guests, price) {
+            const response = await fetch('http://localhost:8000/api/v1/bookings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hotel_id: hotelId, room_id: roomId, check_in: checkIn, check_out: checkOut, num_guests: guests, total_price: price })
+            });
+            alert((await response.json()).message);
+        }
+
+        async function sendChat() {
+            const input = document.getElementById('chatInput').value;
+            const chatDiv = document.getElementById('chat');
+            chatDiv.innerHTML += `<p>You: ${input}</p>`;
+            const response = await fetch('http://localhost:8000/api/v1/ai/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: input })
+            });
+            const data = await response.json();
+            chatDiv.innerHTML += `<p>AI: ${data.response}</p>`;
+            if (data.hotels) {
+                chatDiv.innerHTML += data.hotels.map(h => `<p>${h.hotel_name} - $${h.price}/night</p>`).join('');
+            }
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        }
+
+        document.getElementById('searchForm').addEventListener('submit', e => {
+            e.preventDefault();
+            searchHotels();
+        });
+    </script>
+</body>
+</html>

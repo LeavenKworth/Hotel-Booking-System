@@ -1,0 +1,92 @@
+version: "3.8"
+
+services:
+
+  admin_service:
+    build: ./admin_service
+    ports:
+      - "8001:8000"
+    environment:
+      - MONGO_URI=${MONGO_URI}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+    networks:
+      - backend_net
+
+  ai_agent_service:
+    build: ./ai_agent_service
+    ports:
+      - "8002:8000"
+    environment:
+      - API_GATEWAY_URL=http://localhost:8000
+      - MONGO_URI=${MONGO_URI}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    networks:
+      - backend_net
+
+  booking_service:
+    build: ./booking_service
+    ports:
+      - "8003:8000"
+    environment:
+      - MONGO_URI=${MONGO_URI}
+    networks:
+      - backend_net
+
+  comments_service:
+    build: ./comments_service
+    ports:
+      - "8004:8000"
+    environment:
+      - MONGO_URI=${MONGO_URI}
+    networks:
+      - backend_net
+
+  notification_service:
+    build: ./notification_service
+    environment:
+      - MONGO_URI=${MONGO_URI}
+      - RABBITMQ_URL=${RABBITMQ_URL}
+    networks:
+      - backend_net
+
+  search_service:
+    build: ./search_service
+    ports:
+      - "8005:8000"
+    environment:
+      - MONGO_URI=${MONGO_URI}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+    networks:
+      - backend_net
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - admin_service
+      - ai_agent_service
+      - booking_service
+      - comments_service
+      - notification_service
+      - search_service
+    networks:
+      - backend_net
+
+  static:
+    image: nginx:latest
+    ports:
+      - "8080:80"
+    volumes:
+      - ./static:/usr/share/nginx/html:ro
+    networks:
+      - backend_net
+
+networks:
+  backend_net:
+    driver: bridge
