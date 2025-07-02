@@ -49,7 +49,7 @@ A scalable, cloud-deployable hotel booking platform inspired by Hotels.com. Buil
 |------------------|----------------------|
 | Backend APIs     | Python FastAPI|
 | Frontend         | Basic HTML |
-| DB (Hotel/Booking) MySQL |
+| DB (Hotel/Booking)| MySQL |
 | DB (Comments)    | MongoDB |
 | Caching          | Redis |
 | Messaging Queue  | RabbitMQ |
